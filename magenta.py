@@ -4,9 +4,7 @@
 from abc import ABCMeta, abstractmethod
 
 
-class Magenta:
-
-    __metaclass__ = ABCMeta
+class Magenta(metaclass=ABCMeta):
 
     def __init__(self, key: bytes):
         '''
@@ -18,8 +16,13 @@ class Magenta:
     def _check_key(self, key: bytes):
         '''
         Check key length. If length not equals 16, 24, 32 complite.
+        If great then 16 cut.
         '''
         key_length = len(key)
+
+        if key_length == 16 or key_length == 24 or key_length == 32:
+            self._key = key
+            return
 
         if key_length < 16:
             self._key = key + bytes(16 - key_length)
@@ -29,6 +32,17 @@ class Magenta:
 
         elif key_length < 32:
             self._key = key + bytes(32 - key_length)
+
+        else:
+            self._key = key[:32]
+
+    def _check_length(self, text: bytes):
+        '''
+        Check length, if len(text) % 16 != 0, complite length.
+        '''
+        if len(text) % 16 != 0:
+            return text + bytes(16 - len(text) % 16)
+        return text
 
     @abstractmethod
     def encode(self, text: bytes):
@@ -103,14 +117,12 @@ class Magenta:
         Раундовая функция.
         Входной блок `block` размером 128 бит раунда n c раундовым ключом `key`(64 бит) разбивается на 2 части X1 и X2 размером 64 бита каждая.
         '''
-        assert len(key) == 8
-        assert len(block) == 16
+        assert len(key) == 8 and len(block) == 16
 
         # split block 16 bytes into two blocks 8 bytes
         x1, x2 = block[:8], block[8:]
 
         # (X(2),X(1) xor F(X(2),SK(n)))
-
         imd = self._F(x2 + key)
         r = bytearray()
         for i in range(8):
@@ -149,15 +161,13 @@ class Magenta:
             if el > 255:
                 el = (0xFF & el) ^ 101
             s_arr.append(el)
-
         s_arr[255] = 0
 
         return s_arr
 
     def _f(self, x: int):
         '''
-        Takes 1 byte, return 1 byte. 
-        Byte takes as int.
+        Takes 1 byte, return 1 byte. Byte takes as int.
         Return element by index `x` in s-block.
         '''
         assert 0 <= x <= 255
@@ -169,8 +179,7 @@ class Magenta:
         Функция, которая принимает 1 байт и возвращает 1 байт.
         Байт принимается как число.
         '''
-        assert 0 <= x <= 255
-        assert 0 <= y <= 255
+        assert 0 <= x <= 255 and 0 <= y <= 255
 
         return self._f(x ^ self._f(y))
 
@@ -180,8 +189,7 @@ class Magenta:
         Принимается число, возвращается кортеж из двух байт.
         Конкатенирует результаты A(x, y) и A(y, x).
         '''
-        assert 0 <= x <= 255
-        assert 0 <= y <= 255
+        assert 0 <= x <= 255 and 0 <= y <= 255
 
         return (self._A(x, y), self._A(y, x))
 
@@ -232,8 +240,7 @@ class Magenta:
         С(k,X) = T(X ⊕ S(C(k-1,X)))
         Принимает на вход и возвращает 16 байт
         '''
-        assert k >= 1
-        assert len(arr_x) == 16
+        assert k >= 1 and len(arr_x) == 16
 
         if k == 1:
             return self._T(arr_x)
@@ -241,25 +248,19 @@ class Magenta:
         # intermediate array
         imd = self._S(self._C(k-1, arr_x))
 
-        # побайтовый XOR массивов
-        res = bytearray()
-        for i in range(16):
-            res.append(arr_x[i] ^ imd[i])
+        res = self._xor_bytes(arr_x, imd)
 
         return self._T(res)
 
+    @staticmethod
+    def _xor_bytes(b1: bytes, b2: bytes):
+        '''
+        Return b1 ^ b2
+        '''
+        assert len(b1) == 16 and len(b2) == 16
 
-if __name__ == "__main__":
-    mg = Magenta('aaaaccccbbbbddddeeeeffff'.encode())
+        res = bytearray()
+        for i in range(16):
+            res.append(b1[i] ^ b2[i])
 
-    s = 'a' * 16 + 'b' * 16 + 'c' * 16 + 'd' * 16 + 'e' * 16
-    open_text = s.encode()
-    print('text', open_text)
-
-    enc = mg.encode(open_text)
-    print('enc', enc)
-
-    # mg._key = 'aaaaccccbbbbdddd'.encode()
-
-    dec = mg.decode(enc)
-    print('dec', dec)
+        return res
