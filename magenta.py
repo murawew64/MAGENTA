@@ -11,30 +11,7 @@ class Magenta(metaclass=ABCMeta):
         Constructor takes key with length 16 or 24 or 32 bytes.
         '''
         self._s = self._generate_S()
-        self._check_key(key)
-
-    def _check_key(self, key: bytes):
-        '''
-        Check key length. If length not equals 16, 24, 32 complite.
-        If great then 16 cut.
-        '''
-        key_length = len(key)
-
-        if key_length == 16 or key_length == 24 or key_length == 32:
-            self._key = key
-            return
-
-        if key_length < 16:
-            self._key = key + bytes(16 - key_length)
-
-        elif key_length < 24:
-            self._key = key + bytes(24 - key_length)
-
-        elif key_length < 32:
-            self._key = key + bytes(32 - key_length)
-
-        else:
-            self._key = key[:32]
+        self._key = key
 
     def _check_length(self, text: bytes):
         '''
