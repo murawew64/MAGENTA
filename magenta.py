@@ -13,26 +13,6 @@ class Magenta(metaclass=ABCMeta):
         self._s = self._generate_S()
         self._key = key
 
-    def _check_length(self, text: bytes):
-        '''
-        Check length, if len(text) % 16 != 0, complite length.
-        '''
-        if len(text) % 16 != 0:
-            return text + bytes(16 - len(text) % 16)
-        return text
-
-    @abstractmethod
-    def encode(self, text: bytes):
-        '''
-        Encode text.
-        '''
-
-    @abstractmethod
-    def decode(self, text: bytes):
-        '''
-        Decode text.
-        '''
-
     def _encode_block_16(self, block: bytes):
         '''
         Encode block with key 16 bytes.
@@ -153,8 +133,8 @@ class Magenta(metaclass=ABCMeta):
 
     def _A(self, x: int, y: int):
         '''
-        Функция, которая принимает 1 байт и возвращает 1 байт.
-        Байт принимается как число.
+        Takes and return 1 byte.
+        Byte takes as int.
         '''
         assert 0 <= x <= 255 and 0 <= y <= 255
 
@@ -162,9 +142,8 @@ class Magenta(metaclass=ABCMeta):
 
     def _PE(self, x: int, y: int):
         '''
-        Функция принимает на вход 1 байт и возвращает 2 байта.
-        Принимается число, возвращается кортеж из двух байт.
-        Конкатенирует результаты A(x, y) и A(y, x).
+        Takes `x`, `y`: 1 byte, return tuple with 2 bytes.
+        Concat results of A(x, y) and A(y, x).
         '''
         assert 0 <= x <= 255 and 0 <= y <= 255
 
@@ -172,9 +151,9 @@ class Magenta(metaclass=ABCMeta):
 
     def _P(self, arr_x: bytes):
         '''
+        Takes and return 16 bytes.
         X=X0X1...X14X15
-        (PE(X0,X8)PE(X1,X9)...PE(X6,X14)PE(X7,X15)) - конкатенирует результаты PE(Xi,Xi+8) i=0...7, Xi имеет размер 1 байт.
-        Входной параметр - массив 16 байт, возвращает 16 байт
+        (PE(X0,X8)PE(X1,X9)...PE(X6,X14)PE(X7,X15)) - concat results PE(Xi,Xi+8) i=0...7, Xi - 1 byte.
         '''
         assert len(arr_x) == 16
 
@@ -212,10 +191,10 @@ class Magenta(metaclass=ABCMeta):
 
     def _C(self, k: int, arr_x: bytes):
         '''
-        Рекурсивная функция:
+        Recursive function:
         С(1,X) = T(X)
-        С(k,X) = T(X ⊕ S(C(k-1,X)))
-        Принимает на вход и возвращает 16 байт
+        С(k,X) = T(X ^ S(C(k-1,X)))
+        Takes and return 16 bytes.
         '''
         assert k >= 1 and len(arr_x) == 16
 
@@ -241,3 +220,10 @@ class Magenta(metaclass=ABCMeta):
             res.append(b1[i] ^ b2[i])
 
         return res
+
+
+if __name__ == "__main__":
+    mgnt = Magenta('keykeykeykeykeyk'.encode())
+    close_text = mgnt._encode_block('messagemessageme'.encode())
+    open_text = mgnt._decode_block(close_text)
+    print(open_text)

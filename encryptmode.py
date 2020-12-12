@@ -2,16 +2,37 @@
 Provide intermadiate class with common modes tools.
 '''
 
-import magenta
+from abc import ABCMeta, abstractmethod
+from magenta import Magenta
 
 
-class EncryptMode(magenta.Magenta):
+class EncryptMode(Magenta, metaclass=ABCMeta):
 
     def __init__(self, key, c0):
         #
         key = self._check_key(key)
         super().__init__(key)
         self._check_c0(c0)
+
+    @abstractmethod
+    def encode(self, text: bytes):
+        '''
+        Encode text.
+        '''
+
+    @abstractmethod
+    def decode(self, text: bytes):
+        '''
+        Decode text.
+        '''
+
+    def _check_length(self, text: bytes):
+        '''
+        Check length, if len(text) % 16 != 0, complite length.
+        '''
+        if len(text) % 16 != 0:
+            return text + bytes(16 - len(text) % 16)
+        return text
 
     def _check_c0(self, c0):
         '''
