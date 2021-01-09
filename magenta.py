@@ -1,10 +1,9 @@
 '''
-
+Provide Magenta class to encode and decode data.
 '''
-from abc import ABCMeta, abstractmethod
 
 
-class Magenta(metaclass=ABCMeta):
+class Magenta():
 
     def __init__(self, key: bytes):
         '''
@@ -12,55 +11,37 @@ class Magenta(metaclass=ABCMeta):
         '''
         self._s = self._generate_S()
         self._key = key
+        self._get_key_order(key)
 
-    def _encode_block_16(self, block: bytes):
+    def _get_key_order(self, key: bytes):
         '''
-        Encode block with key 16 bytes.
+        Takes key 16 or 24 or 32 bytes.
+        Return key order array for encryption.
         '''
-        k1, k2 = self._key[:8], self._key[8:]
+        key_len = len(key)
+        if key_len == 16:
+            k1, k2 = self._key[:8], self._key[8:]
+            self._key_order = (k1, k1, k2, k2, k1, k1)
 
-        res = self._FK(k1, self._FK(k1, self._FK(
-            k2, self._FK(k2, self._FK(k1, self._FK(k1, block))))))
+        elif key_len == 24:
+            k1, k2, k3 = key[:8], key[8:16], key[16:24]
+            self._key_order = (k1, k2, k3, k3, k2, k1)
 
-        return res
-
-    def _encode_block_24(self, block: bytes):
-        '''
-        Encode block with key 24 bytes.
-        '''
-        k1, k2, k3 = self._key[:8], self._key[8:16], self._key[16:24]
-
-        res = self._FK(k1, self._FK(k2, self._FK(
-            k3, self._FK(k3, self._FK(k2, self._FK(k1, block))))))
-
-        return res
-
-    def _encode_block_32(self, block: bytes):
-        '''
-        Encode block with key 32 bytes.
-        '''
-        k1, k2 = self._key[:8], self._key[8:16]
-        k3, k4 = self._key[16:24], self._key[24:32]
-
-        res = self._FK(k1, self._FK(k2, self._FK(k3, self._FK(k4, self._FK(
-            k4, self._FK(k3, self._FK(k2, self._FK(k1, block))))))))
-
-        return res
+        else:  # key_len == 32
+            k1, k2 = key[:8], key[8:16]
+            k3, k4 = key[16:24], key[24:32]
+            self._key_order = (k1, k2, k3, k4, k4, k3, k2, k1)
 
     def _encode_block(self, block: bytes):
         '''
         Takes block 16 bytes.
         Return encrypted block 16 bytes.
         '''
-        key_len = len(self._key)
-        if key_len == 16:
-            return self._encode_block_16(block)
+        imd = block
+        for k in self._key_order:
+            imd = self._FK(k, imd)
 
-        elif key_len == 24:
-            return self._encode_block_24(block)
-
-        else:
-            return self._encode_block_32(block)
+        return imd
 
     def _decode_block(self, block: bytes):
         '''
@@ -71,8 +52,8 @@ class Magenta(metaclass=ABCMeta):
 
     def _FK(self, key: bytes, block: bytes):
         '''
-        Раундовая функция.
-        Входной блок `block` размером 128 бит раунда n c раундовым ключом `key`(64 бит) разбивается на 2 части X1 и X2 размером 64 бита каждая.
+        Round function.
+        Takes `block` 16 bytes and round `key` 8 bytes.
         '''
         assert len(key) == 8 and len(block) == 16
 
@@ -92,9 +73,8 @@ class Magenta(metaclass=ABCMeta):
         Takes 16 bytes, return first 8 bytes of _S(_C(3, block))
         '''
         assert len(block) == 16
-
         res = self._S(self._C(3, block))
-        # возвращаются первые 8 байт
+
         return res[:8]
 
     @staticmethod
