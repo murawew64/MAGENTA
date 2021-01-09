@@ -1,5 +1,5 @@
 '''
-
+Provide CBC class with cbc mode to encrypted/decrypted.
 '''
 
 from encryptmode import EncryptMode
@@ -25,9 +25,7 @@ class CBC(EncryptMode):
         '''
         Decode text
         '''
-        if len(text) % 16:
-            raise Exception(
-                'Error: text length not divide by 16 (block length)!')
+        text = self._check_length(text)
 
         prev = self._c0
         res = bytearray()
@@ -44,14 +42,16 @@ class CBC(EncryptMode):
 if __name__ == "__main__":
     mg = CBC('aaaaccccbbbbddddeeeef'.encode(), 'aaaaccccbbbb1231'.encode())
 
-    s = 'a' * 16 + 'b' * 16 + 'c' * 16 + 'd' * 16 + 'e' * 3
-    open_text = s.encode()
-    print('text', open_text)
+    with open('File/1.jpg', 'rb') as f:
+        open_text = f.read()
 
     enc = mg.encode(open_text)
-    print('enc', enc)
+    with open('File/2.jpg', 'wb') as f:
+        f.write(enc)
 
-    # mg._key = 'aaaaccccbbbbdddd'.encode()
+    with open('File/2.jpg', 'rb') as f:
+        close_text = f.read()
 
-    dec = mg.decode(enc)
-    print('dec', dec)
+    dec = mg.decode(close_text)
+    with open('File/3.jpg', 'wb') as f:
+        f.write(dec)

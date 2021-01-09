@@ -1,5 +1,5 @@
 '''
-
+Provide OFB class with ofb mode to encrypted/decrypted.
 '''
 
 from encryptmode import EncryptMode
@@ -24,6 +24,8 @@ class OFB(EncryptMode):
         '''
         Decode text
         '''
+        text = self._check_length(text)
+
         res = self.encode(text)
 
         while res[-1] == 0:
@@ -35,14 +37,16 @@ class OFB(EncryptMode):
 if __name__ == "__main__":
     mg = OFB('aaaaccccbbbbddddeeeef'.encode(), 'aaaaccccbbbb1231'.encode())
 
-    s = 'a' * 16 + 'b' * 16 + 'c' * 16 + 'd' * 16 + 'e' * 3
-    open_text = s.encode()
-    print('text', open_text)
+    with open('File/1.jpg', 'rb') as f:
+        open_text = f.read()
 
     enc = mg.encode(open_text)
-    print('enc', enc)
+    with open('File/2.jpg', 'wb') as f:
+        f.write(enc)
 
-    # mg._key = 'aaaaccccbbbbdddd'.encode()
+    with open('File/2.jpg', 'rb') as f:
+        close_text = f.read()
 
-    dec = mg.decode(enc)
-    print('dec', dec)
+    dec = mg.decode(close_text)
+    with open('File/3.jpg', 'wb') as f:
+        f.write(dec)
