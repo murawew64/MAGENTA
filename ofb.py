@@ -2,7 +2,7 @@
 Provide OFB class with ofb mode to encrypted/decrypted.
 '''
 
-from encryptmode import EncryptMode
+from project.encryptmode import EncryptMode
 
 
 class OFB(EncryptMode):

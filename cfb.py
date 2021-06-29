@@ -2,7 +2,7 @@
 Provide CFB class with cfb mode to encrypted/decrypted.
 '''
 
-from encryptmode import EncryptMode
+from project.encryptmode import EncryptMode
 
 
 class CFB(EncryptMode):

@@ -1,7 +1,7 @@
 '''
 Provide ECB class with ecb mode to encrypted/decrypted.
 '''
-from encryptmode import EncryptMode
+from project.encryptmode import EncryptMode
 
 
 class ECB(EncryptMode):

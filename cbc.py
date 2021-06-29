@@ -2,7 +2,7 @@
 Provide CBC class with cbc mode to encrypted/decrypted.
 '''
 
-from encryptmode import EncryptMode
+from project.encryptmode import EncryptMode
 
 
 class CBC(EncryptMode):

@@ -3,7 +3,7 @@ Provide intermadiate class with common modes tools.
 '''
 
 from abc import ABCMeta, abstractmethod
-from magenta import Magenta
+from project.magenta import Magenta
 
 
 class EncryptMode(Magenta, metaclass=ABCMeta):
